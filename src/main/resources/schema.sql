@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS account (
   user_id BIGINT NOT NULL COMMENT '用户ID',
   	ype TINYINT NOT NULL COMMENT '类型:1收入 2支出 3转账',
   amount DECIMAL(10,2) NOT NULL COMMENT '金额',
-  rom_account VARCHAR(64) DEFAULT '' COMMENT '转出账户',
+  rom_account VARCHAR(64) DEFAULT '' COMMENT '转出账户',
   	o_account VARCHAR(64) DEFAULT '' COMMENT '转入账户',
   category VARCHAR(32) DEFAULT '' COMMENT '分类/原因',
   
