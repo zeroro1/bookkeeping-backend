@@ -24,7 +24,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AccountService extends ServiceImpl<AccountMapper, Account> {
 
-    /** 新增账目 */
+    /** 鏂板璐︾洰 */
     public Result<Void> addAccount(Long userId, AccountDTO dto) {
         Account account = new Account();
         account.setUserId(userId);
@@ -39,11 +39,11 @@ public class AccountService extends ServiceImpl<AccountMapper, Account> {
         return Result.success();
     }
 
-    /** 更新账目 */
+    /** 鏇存柊璐︾洰 */
     public Result<Void> updateAccount(Long userId, Long id, AccountDTO dto) {
         Account account = getById(id);
         if (account == null || !account.getUserId().equals(userId)) {
-            return Result.error(403, "无权操作");
+            return Result.error(403, "鏃犳潈鎿嶄綔");
         }
         account.setType(dto.getType());
         account.setAmount(dto.getAmount());
@@ -56,17 +56,17 @@ public class AccountService extends ServiceImpl<AccountMapper, Account> {
         return Result.success();
     }
 
-    /** 删除账目 */
+    /** 鍒犻櫎璐︾洰 */
     public Result<Void> deleteAccount(Long userId, Long id) {
         Account account = getById(id);
         if (account == null || !account.getUserId().equals(userId)) {
-            return Result.error(403, "无权操作");
+            return Result.error(403, "鏃犳潈鎿嶄綔");
         }
         removeById(id);
         return Result.success();
     }
 
-    /** 查询账目列表 */
+    /** 鏌ヨ璐︾洰鍒楄〃 */
     public Result<List<Account>> getAccounts(Long userId, Integer type, String month) {
         LambdaQueryWrapper<Account> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Account::getUserId, userId)
@@ -90,37 +90,40 @@ public class AccountService extends ServiceImpl<AccountMapper, Account> {
         return Result.success(list);
     }
 
-    /** 获取单条账目 */
+    /** 鑾峰彇鍗曟潯璐︾洰 */
     public Result<Account> getAccount(Long userId, Long id) {
         Account account = getById(id);
         if (account == null || !account.getUserId().equals(userId)) {
-            return Result.error(403, "无权查看");
+            return Result.error(403, "鏃犳潈鏌ョ湅");
         }
         return Result.success(account);
     }
 
-    /** 月度统计 */
-    public Result<List<Map<String, Object>>> getMonthlyStats(Long userId, int year) {
+    /** 鏈堝害缁熻 */
+        public Result<List<Map<String, Object>>> getMonthlyStats(Long userId, int year) {
         List<Map<String, Object>> stats = new ArrayList<>();
         for (int m = 1; m <= 12; m++) {
             Map<String, Object> monthStat = new HashMap<>();
             monthStat.put("month", String.format("%02d", m));
 
-            LambdaQueryWrapper<Account> wrapper = new LambdaQueryWrapper<>();
-            wrapper.eq(Account::getUserId, userId)
-                   .apply("YEAR(date) = {0}", year)
-                   .apply("MONTH(date) = {0}", m);
-
-            List<Account> expenses = wrapper.clone();
-            expenses.eq(Account::getType, 2); // 支出
-            BigDecimal expenseTotal = expenses.list().stream()
+            // 支出统计
+            LambdaQueryWrapper<Account> expenseWrapper = new LambdaQueryWrapper<>();
+            expenseWrapper.eq(Account::getUserId, userId)
+                    .apply("YEAR(date) = {0}", year)
+                    .apply("MONTH(date) = {0}", m)
+                    .eq(Account::getType, 2);
+            BigDecimal expenseTotal = this.list(expenseWrapper).stream()
                     .map(Account::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             monthStat.put("expense", expenseTotal);
 
-            List<Account> incomes = wrapper.clone();
-            incomes.eq(Account::getType, 1); // 收入
-            BigDecimal incomeTotal = incomes.list().stream()
+            // 收入统计
+            LambdaQueryWrapper<Account> incomeWrapper = new LambdaQueryWrapper<>();
+            incomeWrapper.eq(Account::getUserId, userId)
+                    .apply("YEAR(date) = {0}", year)
+                    .apply("MONTH(date) = {0}", m)
+                    .eq(Account::getType, 1);
+            BigDecimal incomeTotal = this.list(incomeWrapper).stream()
                     .map(Account::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             monthStat.put("income", incomeTotal);
@@ -129,4 +132,5 @@ public class AccountService extends ServiceImpl<AccountMapper, Account> {
         }
         return Result.success(stats);
     }
+
 }

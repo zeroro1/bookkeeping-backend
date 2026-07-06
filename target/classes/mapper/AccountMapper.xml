@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bookkeeping.mapper.AccountMapper">
+
+    <select id="selectMonthlyStats" resultType="map">
+        SELECT
+            YEAR(date) AS year,
+            MONTH(date) AS month,
+            SUM(CASE WHEN type = 1 THEN amount ELSE 0 END) AS income,
+            SUM(CASE WHEN type = 2 THEN amount ELSE 0 END) AS expense
+        FROM account
+        WHERE user_id = #{userId} AND deleted = 0
+        GROUP BY YEAR(date), MONTH(date)
+        ORDER BY year DESC, month DESC
+    </select>
+
+</mapper>
