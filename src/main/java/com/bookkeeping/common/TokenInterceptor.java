@@ -1,5 +1,7 @@
 package com.bookkeeping.common;
 
+import com.bookkeeping.entity.User;
+import com.bookkeeping.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +13,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 public class TokenInterceptor implements HandlerInterceptor {
 
     private final JwtUtil jwtUtil;
+    private final UserService userService;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -18,25 +21,35 @@ public class TokenInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        String token = request.getHeader("Authorization");
-        if (token == null || !token.startsWith("Bearer ")) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             response.setStatus(401);
             response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("{\"code\":401,\"message\":\"未授权\"}");
+            response.getWriter().write("{"code":401,"message":"未授权"}");
             return false;
         }
 
-        token = token.substring(7);
+        String token = authHeader.substring(7);
         if (!jwtUtil.validateToken(token)) {
             response.setStatus(401);
             response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write("{\"code\":401,\"message\":\"令牌无效\"}");
+            response.getWriter().write("{"code":401,"message":"令牌无效"}");
             return false;
         }
 
-        // 将 openid 存入请求属性，供 Controller 使用
+        // 从 token 中获取 openid
         String openid = jwtUtil.getOpenidFromToken(token);
-        request.setAttribute("openid", openid);
+        // 根据 openid 查找用户获取 userId
+        User user = userService.getUserByOpenid(openid);
+        if (user == null) {
+            response.setStatus(401);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{"code":401,"message":"用户不存在"}");
+            return false;
+        }
+
+        // 将 userId 存入 request，Controller 可直接获取
+        request.setAttribute("userId", user.getId());
         return true;
     }
 }

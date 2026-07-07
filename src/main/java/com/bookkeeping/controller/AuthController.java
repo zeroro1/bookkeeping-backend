@@ -29,8 +29,9 @@ public class AuthController {
 
     /** 获取用户信息 */
     @GetMapping("/info")
-    public Result<User> getUserInfo(@RequestHeader("Authorization") String token) {
-        String openid = userService.getOpenIdFromToken(token.replace("Bearer ", ""));
+    public Result<User> getUserInfo(@RequestHeader("Authorization") String authorization) {
+        String token = authorization.replace("Bearer ", "");
+        String openid = userService.getOpenIdFromToken(token);
         if (openid == null) {
             return Result.error(401, "未登录");
         }
