@@ -1,0 +1,6 @@
+target/
+.git
+.gitignore
+.idea
+*.md
+src/main/resources/schema.sql
