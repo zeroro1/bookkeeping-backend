@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # MySQL 数据库
+  # MySQL 数据库（独立部署）
   mysql:
     image: mysql:8.0
     container_name: bookkeeping-mysql
@@ -9,7 +9,6 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: 
       MYSQL_DATABASE: bookkeeping
-      MYSQL_CHARSET: utf8mb4
     ports:
       - "3306:3306"
     volumes:
@@ -28,15 +27,13 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/bookkeeping?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf-8&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_URL: jdbc:mysql://:3306/bookkeeping?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf-8&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: 
       SPRING_JPA_PROPERTIES_HIBERNATE_DDL_AUTO: none
       TZ: Asia/Shanghai
     depends_on:
       - mysql
-    volumes:
-      - ./logs:/app/logs
 
 volumes:
   mysql_data:
