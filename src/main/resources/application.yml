@@ -25,5 +25,5 @@ jwt:
   expiration: 86400000
 
 wx:
-  app-id: wxeb839cd064ee3fe6
-  app-secret: f758365e86b8ba3578c3a34f83a8607e
+  app-id: wx9db6d49c952450a5
+  app-secret: f965372349fb541f694eabc6ce79a293
