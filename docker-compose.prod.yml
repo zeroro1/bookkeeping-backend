@@ -1,7 +1,6 @@
-version: '3.8'
+﻿version: '3.8'
 
 services:
-  # Spring Boot 后端（生产环境，连远程 MySQL）
   backend:
     build: .
     container_name: bookkeeping-backend
@@ -10,7 +9,6 @@ services:
       - "8080:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://:3306/bookkeeping?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf-8&allowPublicKeyRetrieval=true
-      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_USERNAME: 
       SPRING_DATASOURCE_PASSWORD: 
-      SPRING_JPA_PROPERTIES_HIBERNATE_DDL_AUTO: none
       TZ: Asia/Shanghai
