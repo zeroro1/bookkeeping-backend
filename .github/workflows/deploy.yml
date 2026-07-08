@@ -62,21 +62,23 @@ jobs:
             docker rm bookkeeping-backend 2>/dev/null || true
             echo "Old container cleaned"
 
-            # Create .env with correct values
+            # Set environment variables from secrets
             export MYSQL_HOST=${{ secrets.MYSQL_CONTAINER_NAME }}
             export MYSQL_USER=root
             export MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
 
+            # Create .env file with Spring Boot compatible variable names
             cat > .env << ENVEOF
-            MYSQL_HOST=$MYSQL_HOST
-            MYSQL_USER=$MYSQL_USER
-            MYSQL_PASSWORD=$MYSQL_PASSWORD
+            SPRING_DATASOURCE_URL=jdbc:mysql://$MYSQL_HOST:3306/bookkeeping?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf-8&allowPublicKeyRetrieval=true
+            SPRING_DATASOURCE_USERNAME=$MYSQL_USER
+            SPRING_DATASOURCE_PASSWORD=$MYSQL_PASSWORD
+            TZ=Asia/Shanghai
             ENVEOF
 
             echo "Created .env:"
             cat .env
 
-            # Run new container
+            # Run new container with environment variables
             docker run -d \
               --name bookkeeping-backend \
               --restart always \
