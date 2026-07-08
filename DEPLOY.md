@@ -1,86 +1,48 @@
-﻿# 服务器部署指南
+# 服务器部署指南
 
-## 前提条件
+## 部署方式
 
-服务器需要安装：
-- Docker
-- Docker Compose
-- Git
+本项目使用 **GitHub Actions CI/CD** 自动部署，无需手动操作。
 
-## 方式一：使用一键部署脚本（推荐）
+### 部署流程
 
-```bash
-# 1. SSH 登录服务器
-ssh 用户@你的服务器IP
+手动触发 GitHub Actions -> 构建 Docker 镜像 -> 推送到 Docker Hub -> SSH 登录服务器 -> 自动获取 MySQL 容器 IP -> 拉取镜像并启动容器
 
-# 2. 执行部署脚本（替换为你的实际 MySQL 信息）
-bash deploy.sh 172.17.0.1 root gzh1994429
+### 触发部署
 
-# 注意：如果 MySQL 和后端在同一台服务器且都在 Docker 中
-# MYSQL_HOST 应该填 MySQL 容器的名称（如 bookkeeping-mysql）
-# 如果 MySQL 装在服务器本机，填 127.0.0.1 或服务器内网IP
-```
+1. 修改后端代码并推送到 main 分支：
+   git add .
+   git commit -m "描述你的修改"
+   git push origin main
 
-## 方式二：手动分步部署
+2. 访问 https://github.com/zeroro1/bookkeeping-backend/actions
 
-### 第 1 步：创建目录并拉取代码
+3. 点击 Deploy to Production -> Run workflow -> 绿色按钮
 
-```bash
-mkdir -p /opt/bookkeeping
-cd /opt/bookkeeping
-git clone https://github.com/zeroro1/bookkeeping-backend.git .
-```
+### 手动部署（应急用）
 
-### 第 2 步：创建 .env 配置文件
+如果 GitHub Actions 不可用时，可以在服务器上手动执行：
 
-```bash
-# 编辑 .env 文件
-vim .env
+# 1. 获取 MySQL 容器 IP
+MYSQL_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' mysql8)
+echo "MySQL IP: $MYSQL_IP"
 
-# 填入以下内容（修改为你自己的值）：
-MYSQL_HOST=172.17.0.1    # MySQL 地址（见下方说明）
-MYSQL_USER=root           # MySQL 用户名
-MYSQL_PASSWORD=gzh1994429 # MySQL 密码
-```
+# 2. 创建 .env
+cat > /opt/bookkeeping/.env << EOF
+SPRING_DATASOURCE_URL=jdbc:mysql://$MYSQL_IP:3306/bookkeeping?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf-8&allowPublicKeyRetrieval=true
+SPRING_DATASOURCE_USERNAME=root
+SPRING_DATASOURCE_PASSWORD=Gzh1994429.
+TZ=Asia/Shanghai
+EOF
 
-**MYSQL_HOST 怎么填？**
-- 如果 MySQL 在 Docker 容器中：填 MySQL 容器的名字（如 `bookkeeping-mysql`）
-- 如果 MySQL 装在服务器本机：填 `127.0.0.1`
-- 如果 MySQL 在其他服务器：填该服务器的内网 IP
+# 3. 拉取最新镜像（从 Docker Hub）
+docker pull <你的DockerHub用户名>/bookkeeping-backend:latest
 
-### 第 3 步：构建 Docker 镜像
-
-```bash
-docker-compose -f docker-compose.prod.yml build --no-cache
-```
-
-### 第 4 步：启动服务
-
-```bash
-docker-compose -f docker-compose.prod.yml up -d
-```
-
-### 第 5 步：查看日志确认启动成功
-
-```bash
-docker logs -f bookkeeping-backend
-```
-
-看到 `Started Application` 或类似字样表示启动成功。
-
-### 第 6 步：测试接口
-
-```bash
-# 测试登录接口
-curl http://localhost:8080/api/auth/test-login
-
-# 预期返回：
-# {"code":200,"message":"测试登录成功","data":{"userId":1,"openid":"test_openid","token":"..."}}
-```
+# 4. 启动容器
+docker run -d --name bookkeeping-backend --restart always -p 8080:8080 --env-file /opt/bookkeeping/.env <你的DockerHub用户名>/bookkeeping-backend:latest
 
 ## 常用命令
 
-```bash
 # 查看容器状态
 docker ps
 
@@ -91,37 +53,21 @@ docker logs bookkeeping-backend
 docker logs -f bookkeeping-backend
 
 # 重启服务
-docker-compose -f docker-compose.prod.yml restart
+docker restart bookkeeping-backend
 
 # 停止服务
-docker-compose -f docker-compose.prod.yml down
+docker stop bookkeeping-backend && docker rm bookkeeping-backend
 
-# 更新代码后重新部署
-cd /opt/bookkeeping
-git pull origin main
-docker-compose -f docker-compose.prod.yml build --no-cache
-docker-compose -f docker-compose.prod.yml up -d
-```
+# 测试接口
+curl http://localhost:8080/api/auth/test-login
 
 ## 防火墙配置
 
-确保服务器安全组/防火墙开放 8080 端口：
-
-```bash
-# Ubuntu/Debian (ufw)
-sudo ufw allow 8080/tcp
-
-# CentOS/RHEL (firewalld)
-sudo firewall-cmd --permanent --add-port=8080/tcp
-sudo firewall-cmd --reload
-```
+确保阿里云安全组开放 8080 端口。
 
 ## 小程序前端配置
 
-部署成功后，需要修改前端项目的 API 地址：
+后端部署成功后，修改前端项目的 API 地址：
 
-在 `bookkeeping-miniapp/utils/request.js` 中：
-```javascript
-// 改为你的服务器公网 IP
+在 bookkeeping-miniapp/utils/request.js 中：
 export const BASE_URL = 'http://你的服务器公网IP:8080/api'
-```
