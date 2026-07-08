@@ -24,7 +24,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AccountService extends ServiceImpl<AccountMapper, Account> {
 
-    /** 鏂板璐︾洰 */
     public Result<Void> addAccount(Long userId, AccountDTO dto) {
         Account account = new Account();
         account.setUserId(userId);
@@ -39,11 +38,10 @@ public class AccountService extends ServiceImpl<AccountMapper, Account> {
         return Result.success();
     }
 
-    /** 鏇存柊璐︾洰 */
     public Result<Void> updateAccount(Long userId, Long id, AccountDTO dto) {
         Account account = getById(id);
         if (account == null || !account.getUserId().equals(userId)) {
-            return Result.error(403, "鏃犳潈鎿嶄綔");
+            return Result.error(403, "无权限操作");
         }
         account.setType(dto.getType());
         account.setAmount(dto.getAmount());
@@ -56,17 +54,15 @@ public class AccountService extends ServiceImpl<AccountMapper, Account> {
         return Result.success();
     }
 
-    /** 鍒犻櫎璐︾洰 */
     public Result<Void> deleteAccount(Long userId, Long id) {
         Account account = getById(id);
         if (account == null || !account.getUserId().equals(userId)) {
-            return Result.error(403, "鏃犳潈鎿嶄綔");
+            return Result.error(403, "无权限操作");
         }
         removeById(id);
         return Result.success();
     }
 
-    /** 鏌ヨ璐︾洰鍒楄〃 */
     public Result<List<Account>> getAccounts(Long userId, Integer type, String month) {
         LambdaQueryWrapper<Account> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Account::getUserId, userId)
@@ -90,17 +86,15 @@ public class AccountService extends ServiceImpl<AccountMapper, Account> {
         return Result.success(list);
     }
 
-    /** 鑾峰彇鍗曟潯璐︾洰 */
     public Result<Account> getAccount(Long userId, Long id) {
         Account account = getById(id);
         if (account == null || !account.getUserId().equals(userId)) {
-            return Result.error(403, "鏃犳潈鏌ョ湅");
+            return Result.error(403, "账目不存在");
         }
         return Result.success(account);
     }
 
-    /** 鏈堝害缁熻 */
-        public Result<List<Map<String, Object>>> getMonthlyStats(Long userId, int year) {
+    public Result<List<Map<String, Object>>> getMonthlyStats(Long userId, int year) {
         List<Map<String, Object>> stats = new ArrayList<>();
         for (int m = 1; m <= 12; m++) {
             Map<String, Object> monthStat = new HashMap<>();

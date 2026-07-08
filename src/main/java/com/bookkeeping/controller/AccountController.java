@@ -19,7 +19,6 @@ public class AccountController {
 
     private final AccountService accountService;
 
-    /** 新增账目 */
     @PostMapping
     public Result<Void> addAccount(HttpServletRequest request,
                                    @Valid @RequestBody AccountDTO dto) {
@@ -27,7 +26,6 @@ public class AccountController {
         return accountService.addAccount(userId, dto);
     }
 
-    /** 更新账目 */
     @PutMapping("/{id}")
     public Result<Void> updateAccount(HttpServletRequest request,
                                       @PathVariable Long id,
@@ -36,7 +34,6 @@ public class AccountController {
         return accountService.updateAccount(userId, id, dto);
     }
 
-    /** 删除账目 */
     @DeleteMapping("/{id}")
     public Result<Void> deleteAccount(HttpServletRequest request,
                                       @PathVariable Long id) {
@@ -44,7 +41,6 @@ public class AccountController {
         return accountService.deleteAccount(userId, id);
     }
 
-    /** 查询账目列表 */
     @GetMapping("/list")
     public Result<List<Account>> getAccounts(HttpServletRequest request,
                                              @RequestParam(required = false) Integer type,
@@ -53,7 +49,6 @@ public class AccountController {
         return accountService.getAccounts(userId, type, month);
     }
 
-    /** 获取单条账目 */
     @GetMapping("/{id}")
     public Result<Account> getAccount(HttpServletRequest request,
                                       @PathVariable Long id) {
@@ -61,7 +56,6 @@ public class AccountController {
         return accountService.getAccount(userId, id);
     }
 
-    /** 月度统计 */
     @GetMapping("/stats")
     public Result<List<Map<String, Object>>> getMonthlyStats(HttpServletRequest request,
                                                               @RequestParam int year) {

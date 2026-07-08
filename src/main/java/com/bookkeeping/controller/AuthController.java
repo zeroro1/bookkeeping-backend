@@ -15,19 +15,16 @@ public class AuthController {
 
     private final UserService userService;
 
-    /** 微信登录 */
     @PostMapping("/login")
     public Result<?> login(@Valid @RequestBody LoginDTO loginDTO) {
         return userService.login(loginDTO);
     }
 
-    /** 测试登录（开发用） */
     @GetMapping("/test-login")
     public Result<?> testLogin() {
         return userService.testLogin();
     }
 
-    /** 获取用户信息 */
     @GetMapping("/info")
     public Result<User> getUserInfo(@RequestHeader("Authorization") String authorization) {
         String token = authorization.replace("Bearer ", "");
