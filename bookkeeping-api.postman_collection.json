@@ -1,0 +1,256 @@
+﻿{
+  "info": {
+    "_postman_id": "bookkeeping-api-collection",
+    "name": "记账应用 API",
+    "description": "微信小程序记账应用的后端接口集合，包含认证、账目管理和统计接口。\n\n使用前请先配置环境变量：\n- BASE_URL: 后端服务地址，如 http://localhost:8080/api\n- TOKEN: 登录获取的 JWT Token",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:8080/api",
+      "type": "string"
+    },
+    {
+      "key": "TOKEN",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{TOKEN}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "01-认证接口",
+      "item": [
+        {
+          "name": "测试登录（开发用）",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{BASE_URL}}/auth/test-login",
+            "description": "开发阶段使用的测试登录接口，无需微信 code，直接返回用户信息和 Token。"
+          },
+          "response": []
+        },
+        {
+          "name": "微信登录",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"微信登录临时凭证code\"\n}"
+            },
+            "url": "{{BASE_URL}}/auth/login",
+            "description": "微信小程序正式登录接口，传入微信登录返回的 code，后端换取 openid 并生成 JWT Token。"
+          },
+          "response": []
+        },
+        {
+          "name": "获取用户信息",
+          "auth": {
+            "type": "bearer",
+            "bearer": [
+              {
+                "key": "token",
+                "value": "{{TOKEN}}"
+              }
+            ]
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{BASE_URL}}/auth/info",
+            "description": "根据 JWT Token 获取当前登录用户的信息。需要在请求头携带 Authorization: Bearer {{TOKEN}}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02-账目管理",
+      "item": [
+        {
+          "name": "新增账目",
+          "auth": {
+            "type": "bearer",
+            "bearer": [
+              {
+                "key": "token",
+                "value": "{{TOKEN}}"
+              }
+            ]
+          },
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": 2,\n  \"amount\": 35.50,\n  \"category\": \"餐饮\",\n  \"remark\": \"午餐\",\n  \"date\": \"2026-07-08\"\n}"
+            },
+            "url": "{{BASE_URL}}/account",
+            "description": "新增一条账目记录。\n\ntype: 1=收入, 2=支出, 3=转账\namount: 金额（必填）\ncategory: 分类（如餐饮、交通、工资等）\nremark: 备注\ndate: 日期，默认当天"
+          },
+          "response": []
+        },
+        {
+          "name": "更新账目",
+          "auth": {
+            "type": "bearer",
+            "bearer": [
+              {
+                "key": "token",
+                "value": "{{TOKEN}}"
+              }
+            ]
+          },
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": 2,\n  \"amount\": 50.00,\n  \"category\": \"交通\",\n  \"remark\": \"修改后的备注\",\n  \"date\": \"2026-07-08\"\n}"
+            },
+            "url": "{{BASE_URL}}/account/:id",
+            "description": "更新指定 ID 的账目记录。:id 需要替换为实际账目ID。"
+          },
+          "response": []
+        },
+        {
+          "name": "删除账目",
+          "auth": {
+            "type": "bearer",
+            "bearer": [
+              {
+                "key": "token",
+                "value": "{{TOKEN}}"
+              }
+            ]
+          },
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{BASE_URL}}/account/:id",
+            "description": "软删除指定 ID 的账目记录。:id 需要替换为实际账目ID。"
+          },
+          "response": []
+        },
+        {
+          "name": "查询账目列表",
+          "auth": {
+            "type": "bearer",
+            "bearer": [
+              {
+                "key": "token",
+                "value": "{{TOKEN}}"
+              }
+            ]
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/account/list?type=2&month=2026-07",
+              "host": ["{{BASE_URL}}"],
+              "path": ["account", "list"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "2",
+                  "description": "可选：1=收入, 2=支出, 3=转账",
+                  "disabled": true
+                },
+                {
+                  "key": "month",
+                  "value": "2026-07",
+                  "description": "可选：按年月筛选，格式 YYYY-MM"
+                }
+              ]
+            },
+            "description": "查询当前用户的账目列表，支持按类型和月份筛选。"
+          },
+          "response": []
+        },
+        {
+          "name": "获取单条账目",
+          "auth": {
+            "type": "bearer",
+            "bearer": [
+              {
+                "key": "token",
+                "value": "{{TOKEN}}"
+              }
+            ]
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{BASE_URL}}/account/:id",
+            "description": "根据 ID 获取单条账目详情。:id 需要替换为实际账目ID。"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03-统计接口",
+      "item": [
+        {
+          "name": "月度统计",
+          "auth": {
+            "type": "bearer",
+            "bearer": [
+              {
+                "key": "token",
+                "value": "{{TOKEN}}"
+              }
+            ]
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/account/stats?year=2026",
+              "host": ["{{BASE_URL}}"],
+              "path": ["account", "stats"],
+              "query": [
+                {
+                  "key": "year",
+                  "value": "2026",
+                  "description": "必填：统计年份"
+                }
+              ]
+            },
+            "description": "获取指定年份的月度收支统计，返回每个月的收入和支出总额。"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
