@@ -62,12 +62,19 @@ jobs:
             docker rm bookkeeping-backend 2>/dev/null || true
             echo "Old container cleaned"
 
-            # Create .env
+            # Create .env with correct values
+            export MYSQL_HOST=${{ secrets.MYSQL_CONTAINER_NAME }}
+            export MYSQL_USER=root
+            export MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
+
             cat > .env << ENVEOF
-            MYSQL_HOST=${{ secrets.MYSQL_CONTAINER_NAME }}
-            MYSQL_USER=root
-            MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
+            MYSQL_HOST=$MYSQL_HOST
+            MYSQL_USER=$MYSQL_USER
+            MYSQL_PASSWORD=$MYSQL_PASSWORD
             ENVEOF
+
+            echo "Created .env:"
+            cat .env
 
             # Run new container
             docker run -d \
