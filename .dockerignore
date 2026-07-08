@@ -1,6 +1,11 @@
-target/
+﻿target/
 .git
 .gitignore
-.idea
 *.md
-src/main/resources/schema.sql
+.idea
+*.iml
+.env
+deploy.sh
+DEPLOY.md
+.env.example
+.github

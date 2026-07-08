@@ -1,0 +1,119 @@
+﻿name: Deploy to Production
+
+on:
+  workflow_dispatch:  # 手动触发
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'Dockerfile'
+      - 'pom.xml'
+      - 'docker-compose.prod.yml'
+
+env:
+  IMAGE_NAME: bookkeeping-backend
+  REGISTRY: ghcr.io
+  REPOSITORY: zeroro1/bookkeeping-backend
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:latest
+
+  deploy:
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          password: ${{ secrets.DEPLOY_PASSWORD }}
+          script: |
+            echo "=== 开始部署 ==="
+
+            # 进入项目目录
+            PROJECT_DIR=/opt/bookkeeping
+            mkdir -p $PROJECT_DIR
+            cd $PROJECT_DIR
+
+            # 拉取最新代码
+            if [ ! -d ".git" ]; then
+              git clone https://github.com/${{ env.REPOSITORY }}.git .
+            else
+              git pull origin main
+            fi
+
+            # 创建 .env 文件
+            cat > .env << ENVEOF
+            MYSQL_HOST=${{ secrets.MYSQL_CONTAINER_NAME }}
+            MYSQL_USER=root
+            MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
+            ENVEOF
+
+            echo "✓ .env 文件已创建"
+
+            # 登录 GHCR
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # 拉取新镜像
+            IMAGE_TAG=${{ env.REGISTRY }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:latest
+            echo "正在拉取镜像: $IMAGE_TAG"
+            docker pull $IMAGE_TAG
+
+            # 停止并移除旧容器
+            docker stop bookkeeping-backend 2>/dev/null || true
+            docker rm bookkeeping-backend 2>/dev/null || true
+            echo "✓ 旧容器已停止"
+
+            # 用新镜像启动容器
+            docker run -d \
+              --name bookkeeping-backend \
+              --restart always \
+              -p 8080:8080 \
+              --env-file $PROJECT_DIR/.env \
+              $IMAGE_TAG
+
+            echo "✓ 新容器已启动"
+
+            # 清理旧镜像
+            docker image prune -f
+
+            # 查看容器状态
+            echo ""
+            echo "=== 容器状态 ==="
+            docker ps --filter name=bookkeeping-backend
+
+            echo ""
+            echo "=== 最后30行日志 ==="
+            docker logs --tail 30 bookkeeping-backend
+
+            echo ""
+            echo "=== 部署完成 ==="
