@@ -73,7 +73,11 @@ public class UserService extends ServiceImpl<UserMapper, User> {
                 + "&grant_type=authorization_code";
         try {
             String resp = restTemplate.getForObject(url, String.class);
-            Pattern p = Pattern.compile(""openid"\s*:\s*"([^"]+)"");
+            if (resp == null || resp.isEmpty()) {
+                return null;
+            }
+            // Extract openid from JSON response
+            Pattern p = Pattern.compile("\"openid\"\\s*:\\s*\"([^\"]+)\"");
             Matcher m = p.matcher(resp);
             if (m.find()) {
                 return m.group(1);
