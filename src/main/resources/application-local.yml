@@ -1,0 +1,30 @@
+# 本地开发环境配置
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/bookkeeping?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf-8&allowPublicKeyRetrieval=true
+    username: root
+    password: Gzh1994429.
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+server:
+  port: 8080
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+jwt:
+  secret: bookkeeping-secret-key-for-jwt-token-generation-2024
+  expiration: 86400000
+
+wx:
+  app-id: wx9db6d49c952450a5
+  app-secret: f965372349fb541f694eabc6ce79a293
