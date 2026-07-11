@@ -1,18 +1,27 @@
 package com.bookkeeping.common;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.bookkeeping.entity.User;
+import com.bookkeeping.mapper.UserMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import java.util.Map;
+
 @Component
+@RequiredArgsConstructor
 public class TokenInterceptor implements HandlerInterceptor {
 
     private static final String HEADER = "Authorization";
     private static final String PREFIX = "Bearer ";
+
+    private final UserMapper userMapper;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -32,7 +41,12 @@ public class TokenInterceptor implements HandlerInterceptor {
                     .getPayload();
 
             String openid = claims.getSubject();
-            request.setAttribute("userId", extractUserId(openid));
+            Long userId = extractUserId(openid);
+            if (userId == null) {
+                sendUnauthorized(response, "用户不存在");
+                return false;
+            }
+            request.setAttribute("userId", userId);
             return true;
         } catch (Exception e) {
             sendUnauthorized(response, "令牌无效");
@@ -51,9 +65,9 @@ public class TokenInterceptor implements HandlerInterceptor {
     }
 
     private Long extractUserId(String openid) {
-        if ("test_openid_001".equals(openid)) {
-            return 1L;
-        }
-        return 1L;
+        LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(User::getOpenid, openid);
+        User user = userMapper.selectOne(wrapper);
+        return user != null ? user.getId() : null;
     }
 }
