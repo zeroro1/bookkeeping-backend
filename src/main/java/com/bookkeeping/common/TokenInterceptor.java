@@ -6,7 +6,6 @@ import com.bookkeeping.mapper.UserMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -15,7 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
-import java.security.Key;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @Component
@@ -41,7 +40,7 @@ public class TokenInterceptor implements HandlerInterceptor {
 
         String token = authHeader.substring(7);
         try {
-            Key signingKey = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+            var signingKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
             Claims claims = Jwts.parser()
                     .verifyWith(signingKey)
                     .build()
