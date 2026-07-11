@@ -6,12 +6,16 @@ import com.bookkeeping.mapper.UserMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import java.security.Key;
 import java.util.Map;
 
 @Component
@@ -22,6 +26,9 @@ public class TokenInterceptor implements HandlerInterceptor {
     private static final String PREFIX = "Bearer ";
 
     private final UserMapper userMapper;
+
+    @Value("${jwt.secret}")
+    private String jwtSecret;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -34,8 +41,9 @@ public class TokenInterceptor implements HandlerInterceptor {
 
         String token = authHeader.substring(7);
         try {
+            Key signingKey = Keys.hmacShaKeyFor(jwtSecret.getBytes());
             Claims claims = Jwts.parser()
-                    .verifyWith(Jwts.SIG.HS384.key().build())
+                    .verifyWith(signingKey)
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
