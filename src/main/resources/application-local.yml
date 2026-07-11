@@ -3,7 +3,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/bookkeeping?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf-8&allowPublicKeyRetrieval=true
     username: root
-    password: Gzh1994429.
+    password: gzh1994429
     driver-class-name: com.mysql.cj.jdbc.Driver
 
 server:
