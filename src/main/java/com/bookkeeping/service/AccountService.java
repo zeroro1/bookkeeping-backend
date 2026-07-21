@@ -41,7 +41,7 @@ public class AccountService extends ServiceImpl<AccountMapper, Account> {
     public Result<Void> updateAccount(Long userId, Long id, AccountDTO dto) {
         Account account = getById(id);
         if (account == null || !account.getUserId().equals(userId)) {
-            return Result.error(403, "无权限操作");
+            return Result.error(403, "无权操作");
         }
         account.setType(dto.getType());
         account.setAmount(dto.getAmount());
@@ -57,13 +57,16 @@ public class AccountService extends ServiceImpl<AccountMapper, Account> {
     public Result<Void> deleteAccount(Long userId, Long id) {
         Account account = getById(id);
         if (account == null || !account.getUserId().equals(userId)) {
-            return Result.error(403, "无权限操作");
+            return Result.error(403, "无权操作");
         }
         removeById(id);
         return Result.success();
     }
 
     public Result<List<Account>> getAccounts(Long userId, Integer type, String month) {
+        if (userId == null) {
+            return Result.success(new ArrayList<>());
+        }
         LambdaQueryWrapper<Account> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Account::getUserId, userId)
                .orderByDesc(Account::getDate)
@@ -100,7 +103,6 @@ public class AccountService extends ServiceImpl<AccountMapper, Account> {
             Map<String, Object> monthStat = new HashMap<>();
             monthStat.put("month", String.format("%02d", m));
 
-            // 支出统计
             LambdaQueryWrapper<Account> expenseWrapper = new LambdaQueryWrapper<>();
             expenseWrapper.eq(Account::getUserId, userId)
                     .apply("YEAR(date) = {0}", year)
@@ -111,7 +113,6 @@ public class AccountService extends ServiceImpl<AccountMapper, Account> {
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             monthStat.put("expense", expenseTotal);
 
-            // 收入统计
             LambdaQueryWrapper<Account> incomeWrapper = new LambdaQueryWrapper<>();
             incomeWrapper.eq(Account::getUserId, userId)
                     .apply("YEAR(date) = {0}", year)

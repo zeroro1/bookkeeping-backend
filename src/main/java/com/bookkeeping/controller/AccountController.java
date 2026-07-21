@@ -42,11 +42,10 @@ public class AccountController {
     }
 
     @GetMapping("/list")
-    public Result<List<Account>> getAccounts(HttpServletRequest request,
-                                             @RequestParam(required = false) Integer type,
-                                             @RequestParam(required = false) String month) {
-        Long userId = (Long) request.getAttribute("userId");
-        return accountService.getAccounts(userId, type, month);
+    public Result<List<Account>> getAccounts(
+            @RequestParam(required = false) Integer type,
+            @RequestParam(required = false) String month) {
+        return accountService.getAccounts(null, type, month);
     }
 
     @GetMapping("/{id}")
