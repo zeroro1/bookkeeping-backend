@@ -33,9 +33,9 @@ public class TokenInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         String authHeader = request.getHeader(HEADER);
 
+        // 没有 token 时放行，但 userId 为 null（允许未登录浏览）
         if (authHeader == null || !authHeader.startsWith(PREFIX)) {
-            sendUnauthorized(response, "缺少认证信息");
-            return false;
+            return true;
         }
 
         String token = authHeader.substring(7);
